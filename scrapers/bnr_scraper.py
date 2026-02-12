@@ -66,9 +66,10 @@ def extract_exchange_rates(driver):
             if buy_rate and sell_rate and bank_name:
                 rates.append(
                     {
-                        "source": f"{SOURCE_NAME}",
+                        "platform_source": f"{SOURCE_NAME}",
                         "name": f"{bank_name}",
-                        "city": "",
+                        "city": None,
+                        "type": "bank",
                         "currency": "EUR",
                         "buy": float(buy_rate.replace(",", ".")),
                         "sell": float(sell_rate.replace(",", ".")),
