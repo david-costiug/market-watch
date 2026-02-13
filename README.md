@@ -15,7 +15,8 @@ An ETL pipeline for tracking Romanian currency exchange rates. Extracts EUR/RON 
 market-watch/
 ├── app/
 │   ├── core/
-│   │   └── config.py            # Centralized configuration (DB path, URLs, timezone)
+│   │   ├── config.py            # Centralized configuration (DB path, URLs, timezone)
+│   │   └── logging.py           # Centralized logging setup
 │   ├── database/
 │   │   ├── connection.py        # SQLite connection management
 │   │   ├── init_database.py     # Database initialization from schema
@@ -167,7 +168,19 @@ All configuration is centralized in `app/core/config.py`:
 | `CHROME_OPTIONS` | Headless Chrome arguments |
 | `USER_AGENT` | Browser user agent string |
 
+## Logging
+
+The project uses a centralized logging system configured in `app/core/logging.py`. All pipeline activity is logged to `logs/pipeline.log` (auto-created on first run).
+
+| Setting | Value |
+|---------|-------|
+| Log file | `logs/pipeline.log` |
+| Log level | `INFO` |
+| Format | `%(asctime)s - %(levelname)s - %(message)s` |
+| Logger name | `market-watch` |
+
 ## Dependencies
 
 - **selenium** — browser automation for scraping
 - **sqlite3** — database (Python standard library)
+- **logging** — pipeline logging (Python standard library)

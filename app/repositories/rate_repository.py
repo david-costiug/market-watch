@@ -7,7 +7,7 @@ def insert_exchange_rate(conn, entity_id: int, rate: ExchangeRate):
 
     cursor.execute(
         """
-        INSERT INTO exchange_rates
+        INSERT OR IGNORE INTO exchange_rates
         (entity_id, currency, buy_rate, sell_rate, scraped_at)
         VALUES (?, ?, ?, ?, ?)
         """,

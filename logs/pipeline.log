@@ -1,0 +1,4 @@
+2026-02-13 15:39:48,669 - INFO - Pipeline started.
+2026-02-13 15:40:03,859 - INFO - Scraper scrape_valutare returned 188 records.
+2026-02-13 15:40:10,126 - INFO - Scraper scrape_bnr returned 12 records.
+2026-02-13 15:40:10,134 - INFO - Pipeline finished.

@@ -10,5 +10,4 @@ def process_scraped_data(scraped_records: list[ScrapedRecord]):
             entity_id = get_or_create_entity(conn, record.entity)
 
             create_exchange_rate(conn, entity_id, record.rate)
-        print(f"Processed {len(scraped_records)} records.")
         conn.commit()

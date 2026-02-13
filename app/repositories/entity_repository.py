@@ -25,7 +25,7 @@ def insert_entity(conn, entity: Entity):
 
     cursor.execute(
         """
-        INSERT INTO entities (platform_source, name, city, type)
+        INSERT OR IGNORE INTO entities (platform_source, name, city, type)
         VALUES (?, ?, ?, ?)
         """,
         (entity.platform_source, entity.name, entity.city, entity.type),
