@@ -1,6 +1,6 @@
-from scrapers.valutare_scraper import scrape_valutare
-from scrapers.bnr_scraper import scrape_bnr
-from pipeline import process_scraped_data
+from app.scrapers.valutare_scraper import scrape_valutare
+from app.scrapers.bnr_scraper import scrape_bnr
+from app.services.pipeline_service import process_scraped_data
 
 
 def run_all():

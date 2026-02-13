@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "market-watch"
+version = "0.1.0"
+description = "Exchange rate scraper and tracker"
+requires-python = ">=3.9"
+dependencies = [
+    "selenium",
+]
+
+[project.scripts]
+query-rates = "scripts.query_rates:main"
+run-pipeline = "scripts.run_pipeline:run_all"

@@ -1,10 +1,10 @@
 import sqlite3
-from pathlib import Path
 
-DB_PATH = Path(__file__).resolve().parent / "exchange_rates.db"
+from app.core.config import DB_PATH
 
 
 def get_connection():
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.execute("PRAGMA foreign_keys = ON;")
     return conn

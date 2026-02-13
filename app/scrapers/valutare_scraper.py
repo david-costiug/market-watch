@@ -1,29 +1,16 @@
-from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.options import Options
 from datetime import datetime
-from zoneinfo import ZoneInfo
 import time
 
-ROMANIA_TZ = ZoneInfo("Europe/Bucharest")
+from app.core.config import VALUTARE_URL, TIMEZONE, TIMESTAMP_FORMAT
+from app.scrapers.driver import get_driver
+from app.models.entity import Entity
+from app.models.exchange_rate import ExchangeRate
+from app.models.scraped_record import ScrapedRecord
 
-VALUTARE_URL = "https://www.valutare.ro/curs/curs-valutar-case-de-schimb.html"
 SOURCE_NAME = "Valutare"
-
-
-def get_driver():
-    """Create a headless Chrome driver."""
-    options = Options()
-    options.add_argument("--headless")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument(
-        "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-    )
-    return webdriver.Chrome(options=options)
 
 
 def scrape_valutare():
@@ -77,18 +64,20 @@ def extract_exchange_rates(driver):
 
             if buy_rate and sell_rate:
                 rates.append(
-                    {
-                        "platform_source": f"{SOURCE_NAME}",
-                        "name": f"{exchange_name}",
-                        "city": f"{city_name}",
-                        "type": "exchange_office",
-                        "currency": "EUR",
-                        "buy": float(buy_rate.replace(",", ".")),
-                        "sell": float(sell_rate.replace(",", ".")),
-                        "timestamp": datetime.now(ROMANIA_TZ).strftime(
-                            "%Y-%m-%dT%H:%M"
+                    ScrapedRecord(
+                        entity=Entity(
+                            platform_source=SOURCE_NAME,
+                            name=exchange_name,
+                            city=city_name,
+                            type="exchange_office",
                         ),
-                    }
+                        rate=ExchangeRate(
+                            currency="EUR",
+                            buy=float(buy_rate.replace(",", ".")),
+                            sell=float(sell_rate.replace(",", ".")),
+                            timestamp=datetime.now(TIMEZONE).strftime(TIMESTAMP_FORMAT),
+                        ),
+                    )
                 )
         except Exception:
             continue
@@ -96,6 +85,7 @@ def extract_exchange_rates(driver):
 
 
 def handle_lazy_loading(driver):
+    """Handle lazy loading by scrolling down until no new rows are loaded."""
     max_scroll_attempts = 10
     scroll_attempts = 0
 
@@ -114,6 +104,7 @@ def handle_lazy_loading(driver):
 
 
 def wait_for_proper_loading(driver):
+    """Wait for the table to load properly."""
     WebDriverWait(driver, 15).until(
         EC.presence_of_element_located((By.CLASS_NAME, "exchangegrid"))
     )

@@ -1,4 +1,4 @@
-from db import get_connection
+from app.database.connection import get_connection
 import sqlite3
 
 
@@ -6,7 +6,7 @@ def init_db():
 
     try:
         with get_connection() as conn:
-            with open("database/schema.sql", "r") as f:
+            with open("app/database/schema.sql", "r") as f:
                 conn.executescript(f.read())
             conn.commit()
             print(
