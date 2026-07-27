@@ -1,6 +1,6 @@
 # Market Watch
 
-An ETL pipeline for tracking Romanian currency exchange rates. Extracts EUR/RON buy and sell rates from multiple online sources, transforms raw data into structured records, and loads them into a local SQLite database for historical tracking.
+An ETL pipeline for tracking Romanian currency exchange rates. Extracts EUR/RON buy and sell rates from multiple online sources, transforms raw data into structured records, and loads them into a PostgreSQL database for historical tracking.
 
 ## Data Sources
 
@@ -15,12 +15,12 @@ An ETL pipeline for tracking Romanian currency exchange rates. Extracts EUR/RON 
 market-watch/
 ├── app/
 │   ├── core/
-│   │   ├── config.py            # Centralized configuration (DB path, URLs, timezone)
+│   │   ├── config.py            # Centralized configuration (DATABASE_URL, URLs, timezone)
 │   │   └── logging.py           # Centralized logging setup
 │   ├── database/
-│   │   ├── connection.py        # SQLite connection management
+│   │   ├── connection.py        # PostgreSQL connection pool management
 │   │   ├── init_database.py     # Database initialization from schema
-│   │   └── schema.sql           # Table definitions
+│   │   └── schema.sql           # PostgreSQL table definitions
 │   ├── models/
 │   │   ├── entity.py            # Entity dataclass (bank / exchange office)
 │   │   ├── exchange_rate.py     # ExchangeRate dataclass with validation
@@ -39,10 +39,9 @@ market-watch/
 ├── scripts/
 │   ├── run_pipeline.py          # Run all scrapers and store results
 │   └── query_rates.py           # Query and display stored rates
-├── data/
-│   └── exchange_rates.db        # SQLite database (auto-created)
 ├── logs/
 │   └── pipeline.log             # Pipeline log file (auto-created)
+├── .env                         # Environment variables (DATABASE_URL)
 ├── pyproject.toml
 ├── .gitignore
 └── README.md
@@ -53,20 +52,29 @@ market-watch/
 ### Prerequisites
 
 - Python 3.9+
+- PostgreSQL database
 - Google Chrome installed
 - ChromeDriver matching your Chrome version
+
+### Configuration
+
+Create a `.env` file in the root directory:
+
+```env
+DATABASE_URL=postgresql://user:password@localhost:5432/market_watch
+```
 
 ### Initialize the Database
 
 ```bash
-python app/database/init_database.py
+python -m app.database.init_database
 ```
 
 ## Usage
 
 ### Run the ETL Pipeline
 
-Extracts rates from all sources, transforms and loads them into the database:
+Extracts rates from all sources, transforms and loads them into the PostgreSQL database:
 
 ```bash
 python scripts/run_pipeline.py
@@ -98,12 +106,12 @@ python app/scrapers/valutare_scraper.py
     ↓
 [Transform] Parse & validate → ScrapedRecord (dataclass)
     ↓
-[Load] Pipeline Service → Repositories → SQLite
+[Load] Pipeline Service → Repositories → PostgreSQL Connection Pool
 ```
 
 1. **Extract** — Scrapers launch a headless Chrome browser and pull raw rate data from source websites. The Valutare scraper handles lazy-loaded content by scrolling the page up to 10 times until all exchange rows are loaded.
 2. **Transform** — HTML elements are parsed into validated `ScrapedRecord` dataclass objects, with string-to-float conversion (comma → dot decimal), timestamping, and rate validation (buy/sell must be > 0).
-3. **Load** — Pipeline service resolves entities (get-or-create) and inserts exchange rates into SQLite. All inserts are batched in a single transaction and committed at the end.
+3. **Load** — Pipeline service resolves entities (get-or-create) and inserts exchange rates into PostgreSQL using a connection pool. All inserts are batched in a single transaction and committed at the end.
 
 ### Database Schema
 
@@ -111,11 +119,11 @@ python app/scrapers/valutare_scraper.py
 
 | Column | Type | Description |
 |--------|------|-------------|
-| id | INTEGER | Primary key (autoincrement) |
-| platform_source | TEXT | Source platform (e.g., "Valutare", "BNR") |
-| name | TEXT | Entity name |
-| city | TEXT | City (nullable, used for exchange offices) |
-| type | TEXT | "bank" or "exchange_office" |
+| id | SERIAL | Primary key |
+| platform_source | VARCHAR(255) | Source platform (e.g., "Valutare", "BNR") |
+| name | VARCHAR(255) | Entity name |
+| city | VARCHAR(255) | City (nullable, used for exchange offices) |
+| type | VARCHAR(100) | "bank" or "exchange_office" |
 
 - `UNIQUE(platform_source, name, city)` — prevents duplicate entities
 
@@ -123,81 +131,21 @@ python app/scrapers/valutare_scraper.py
 
 | Column | Type | Description |
 |--------|------|-------------|
-| id | INTEGER | Primary key (autoincrement) |
+| id | SERIAL | Primary key |
 | entity_id | INTEGER | Foreign key → entities |
-| currency | TEXT | Currency code (e.g., "EUR") |
-| buy_rate | REAL | Buy rate (entity buys from you) |
-| sell_rate | REAL | Sell rate (entity sells to you) |
+| currency | VARCHAR(10) | Currency code (e.g., "EUR") |
+| buy_rate | NUMERIC(12, 6) | Buy rate (entity buys from you) |
+| sell_rate | NUMERIC(12, 6) | Sell rate (entity sells to you) |
 | scraped_at | TIMESTAMP | When the rate was scraped |
 
 - `UNIQUE(entity_id, currency, scraped_at)` — prevents duplicate rate entries
 - `INDEX idx_rates_entity_currency_time` on `(entity_id, currency, scraped_at)` — optimizes rate lookups
-- Repositories use `INSERT OR IGNORE` to silently skip duplicate records
-
-### Data Models
-
-```python
-# app/models/entity.py
-@dataclass
-class Entity:
-    platform_source: str
-    name: str
-    city: Optional[str]
-    type: str                # "bank" or "exchange_office"
-
-# app/models/exchange_rate.py
-@dataclass
-class ExchangeRate:
-    currency: str
-    buy: float
-    sell: float
-    timestamp: str
-    # __post_init__ raises ValueError if buy <= 0 or sell <= 0
-
-# app/models/scraped_record.py
-@dataclass
-class ScrapedRecord:
-    entity: Entity
-    rate: ExchangeRate
-```
-
-## Configuration
-
-All configuration is centralized in `app/core/config.py`:
-
-| Setting | Value / Description |
-|---------|---------------------|
-| `BASE_DIR` | Project root directory (resolved relative to `config.py`) |
-| `DB_PATH` | `data/exchange_rates.db` (relative to `BASE_DIR`) |
-| `TIMEZONE` | `ZoneInfo("Europe/Bucharest")` |
-| `TIMESTAMP_FORMAT` | `"%Y-%m-%dT%H:%M"` |
-| `BNR_URL` | `https://www.cursbnr.ro/curs-valutar-banci` |
-| `VALUTARE_URL` | `https://www.valutare.ro/curs/curs-valutar-case-de-schimb.html` |
-| `CHROME_OPTIONS` | `["--headless", "--disable-gpu", "--no-sandbox", "--disable-dev-shm-usage"]` |
-| `USER_AGENT` | Custom Chrome user-agent string |
-
-## Logging
-
-The project uses a centralized logging system configured in `app/core/logging.py`. All pipeline activity is logged to `logs/pipeline.log` (auto-created on first run).
-
-| Setting | Value |
-|---------|-------|
-| Log file | `logs/pipeline.log` |
-| Log level | `INFO` |
-| Format | `%(asctime)s - %(levelname)s - %(message)s` |
-| Logger name | `market-watch` |
-
-## Error Handling
-
-- **Scraper-level** — Each scraper wraps its execution in a try/except. On failure, it logs the error and returns an empty list so the pipeline can continue with other sources.
-- **Row-level** — Individual row parsing errors within a scraper are silently skipped (`continue`), allowing partial data extraction from a page.
-- **Pipeline-level** — `run_pipeline.py` catches per-scraper exceptions and continues to the next scraper. If no records are collected from any source, it logs a warning and exits early.
-- **Rate validation** — `ExchangeRate.__post_init__` raises `ValueError` if buy or sell rates are not positive, preventing invalid data from reaching the database.
-- **Database dedup** — `INSERT OR IGNORE` combined with UNIQUE constraints prevents duplicate records without raising errors.
+- Repositories use `ON CONFLICT DO NOTHING` to silently skip duplicate records
 
 ## Dependencies
 
 - **selenium** — browser automation for scraping
-- **sqlite3** — database (Python standard library)
+- **psycopg2-binary** — PostgreSQL database adapter & connection pool
+- **python-dotenv** — environment variable management
 - **zoneinfo** — timezone handling (Python standard library)
 - **logging** — pipeline logging (Python standard library)
