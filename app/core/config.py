@@ -1,9 +1,16 @@
+import os
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 # Paths
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-DB_PATH = BASE_DIR / "data" / "exchange_rates.db"
+
+# Database
+DATABASE_URL = os.environ["DATABASE_URL"]
 
 # Timezone
 TIMEZONE = ZoneInfo("Europe/Bucharest")

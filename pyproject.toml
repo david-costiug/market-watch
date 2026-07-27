@@ -9,8 +9,16 @@ description = "Exchange rate scraper and tracker"
 requires-python = ">=3.9"
 dependencies = [
     "selenium",
+    "psycopg2-binary",
+    "python-dotenv",
 ]
 
 [project.scripts]
 query-rates = "scripts.query_rates:main"
 run-pipeline = "scripts.run_pipeline:run_all"
+init-db = "app.database.init_database:init_db"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*", "scripts*"]
+
