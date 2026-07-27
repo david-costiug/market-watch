@@ -7,13 +7,17 @@ def insert_exchange_rate(conn, entity_id: int, rate: ExchangeRate):
 
     cursor.execute(
         """
-        INSERT OR IGNORE INTO exchange_rates
+        INSERT INTO exchange_rates
         (entity_id, currency, buy_rate, sell_rate, scraped_at)
-        VALUES (?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s)
+        ON CONFLICT (entity_id, currency, scraped_at) DO NOTHING
+        RETURNING id
         """,
         (entity_id, rate.currency, rate.buy, rate.sell, rate.timestamp),
     )
-    return cursor.lastrowid
+
+    result = cursor.fetchone()
+    return result[0] if result else None
 
 
 def get_rates(conn):

@@ -8,9 +8,9 @@ def get_entity_id(conn, entity: Entity):
     cursor.execute(
         """
         SELECT id FROM entities
-        WHERE platform_source = ?
-        AND name = ?
-        AND (city = ? OR (city IS NULL AND ? IS NULL))
+        WHERE platform_source = %s
+        AND name = %s
+        AND (city = %s OR (city IS NULL AND %s IS NULL))
         """,
         (entity.platform_source, entity.name, entity.city, entity.city),
     )
@@ -25,10 +25,13 @@ def insert_entity(conn, entity: Entity):
 
     cursor.execute(
         """
-        INSERT OR IGNORE INTO entities (platform_source, name, city, type)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO entities (platform_source, name, city, type)
+        VALUES (%s, %s, %s, %s)
+        ON CONFLICT (platform_source, name, city) DO NOTHING
+        RETURNING id
         """,
         (entity.platform_source, entity.name, entity.city, entity.type),
     )
 
-    return cursor.lastrowid
+    result = cursor.fetchone()
+    return result[0] if result else None
