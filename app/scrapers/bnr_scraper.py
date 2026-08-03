@@ -1,5 +1,5 @@
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
 from datetime import datetime
 import time
@@ -14,28 +14,39 @@ SOURCE_NAME = "BNR"
 
 
 def scrape_bnr():
-    """Scrape exchange rates from cursbnr.ro (EUR only)."""
+    """Scrape exchange rates from cursbnr.ro (EUR, USD, GBP)."""
     driver = None
+    all_rates = []
+    currencies = ["EUR", "USD", "GBP"]
     try:
         driver = get_driver()
         driver.get(BNR_URL)
 
         wait_for_proper_loading(driver)
 
-        rates = extract_exchange_rates(driver)
+        for currency in currencies:
+            select_element = driver.find_element(By.ID, "c1")
+            select = Select(select_element)
+            select.select_by_value(currency)
+            
+            time.sleep(2)
+            wait_for_proper_loading(driver)
 
-        return rates
+            rates = extract_exchange_rates(driver, currency)
+            all_rates.extend(rates)
+
+        return all_rates
 
     except Exception as e:
         print(f"[ERROR] BNR scraping failed: {e}")
-        return []
+        return all_rates
 
     finally:
         if driver:
             driver.quit()
 
 
-def extract_exchange_rates(driver):
+def extract_exchange_rates(driver, currency):
     """Extract exchange rates in format: {source}, {name}, {city}, {currency}, {buy}, {sell}, {timestamp}"""
     rates = []
     exchange_rows = driver.find_elements(By.TAG_NAME, "tr")
@@ -60,7 +71,7 @@ def extract_exchange_rates(driver):
                             type="bank",
                         ),
                         rate=ExchangeRate(
-                            currency="EUR",
+                            currency=currency,
                             buy=float(buy_rate.replace(",", ".")),
                             sell=float(sell_rate.replace(",", ".")),
                             timestamp=datetime.now(TIMEZONE).strftime(TIMESTAMP_FORMAT),

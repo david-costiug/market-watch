@@ -18,7 +18,7 @@ TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M"
 
 # Scraper URLs
 BNR_URL = "https://www.cursbnr.ro/curs-valutar-banci"
-VALUTARE_URL = "https://www.valutare.ro/curs/curs-valutar-case-de-schimb.html"
+VALUTARE_URL = "https://www.valutare.ro/curs/curs-valutar-{}-case-de-schimb.html"
 
 # Chrome options
 CHROME_OPTIONS = [

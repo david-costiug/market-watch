@@ -14,30 +14,35 @@ SOURCE_NAME = "Valutare"
 
 
 def scrape_valutare():
-    """Scrape exchange rates from valutare.ro (EUR only)."""
+    """Scrape exchange rates from valutare.ro (EUR, USD, GBP)."""
     driver = None
+    all_rates = []
+    currencies = ["EUR", "USD", "GBP"]
     try:
         driver = get_driver()
-        driver.get(VALUTARE_URL)
+        for currency in currencies:
+            url = VALUTARE_URL.format(currency.lower())
+            driver.get(url)
 
-        wait_for_proper_loading(driver)
+            wait_for_proper_loading(driver)
 
-        handle_lazy_loading(driver)
+            handle_lazy_loading(driver)
 
-        rates = extract_exchange_rates(driver)
+            rates = extract_exchange_rates(driver, currency)
+            all_rates.extend(rates)
 
-        return rates
+        return all_rates
 
     except Exception as e:
         print(f"[ERROR] Valutare scraping failed: {e}")
-        return []
+        return all_rates
 
     finally:
         if driver:
             driver.quit()
 
 
-def extract_exchange_rates(driver):
+def extract_exchange_rates(driver, currency):
     """Extract exchange rates in format: {source}, {exchange-name}, {city}, {currency}, {buy}, {sell}, {timestamp}"""
     rates = []
     exchange_rows = driver.find_elements(By.CLASS_NAME, "exchange-row")
@@ -72,7 +77,7 @@ def extract_exchange_rates(driver):
                             type="exchange_office",
                         ),
                         rate=ExchangeRate(
-                            currency="EUR",
+                            currency=currency,
                             buy=float(buy_rate.replace(",", ".")),
                             sell=float(sell_rate.replace(",", ".")),
                             timestamp=datetime.now(TIMEZONE).strftime(TIMESTAMP_FORMAT),
