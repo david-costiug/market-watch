@@ -30,5 +30,7 @@ jobs:
         ruff check .
         
     - name: Run tests (Unit & Integration)
+      env:
+        DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
       run: |
         pytest
