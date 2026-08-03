@@ -1,8 +1,9 @@
+from datetime import datetime
+import time
+from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from datetime import datetime
-import time
 
 from app.core.config import VALUTARE_URL, TIMEZONE, TIMESTAMP_FORMAT
 from app.scrapers.driver import get_driver
@@ -13,7 +14,7 @@ from app.models.scraped_record import ScrapedRecord
 SOURCE_NAME = "Valutare"
 
 
-def scrape_valutare():
+def scrape_valutare() -> list[ScrapedRecord]:
     """Scrape exchange rates from valutare.ro (EUR, USD, GBP)."""
     driver = None
     all_rates = []
@@ -21,14 +22,8 @@ def scrape_valutare():
     try:
         driver = get_driver()
         for currency in currencies:
-            url = VALUTARE_URL.format(currency.lower())
-            driver.get(url)
-
-            wait_for_proper_loading(driver)
-
-            handle_lazy_loading(driver)
-
-            rates = extract_exchange_rates(driver, currency)
+            html = fetch_page_source(driver, currency)
+            rates = parse_html(html, currency)
             all_rates.extend(rates)
 
         return all_rates
@@ -42,29 +37,39 @@ def scrape_valutare():
             driver.quit()
 
 
-def extract_exchange_rates(driver, currency):
-    """Extract exchange rates in format: {source}, {exchange-name}, {city}, {currency}, {buy}, {sell}, {timestamp}"""
+def fetch_page_source(driver, currency: str) -> str:
+    """Fetch page source HTML after lazy loading."""
+    url = VALUTARE_URL.format(currency.lower())
+    driver.get(url)
+    wait_for_proper_loading(driver)
+    handle_lazy_loading(driver)
+    return driver.page_source
+
+
+def parse_html(html: str, currency: str) -> list[ScrapedRecord]:
+    """Extract exchange rates from HTML using BeautifulSoup."""
     rates = []
-    exchange_rows = driver.find_elements(By.CLASS_NAME, "exchange-row")
+    soup = BeautifulSoup(html, "html.parser")
+    exchange_rows = soup.select(".exchange-row")
 
     for row in exchange_rows:
         try:
             # Get exchange name
-            name_element = row.find_element(By.CLASS_NAME, "exchange-name-txt")
-            exchange_name = name_element.get_attribute("textContent").strip()
+            name_el = row.select_one(".exchange-name-txt")
+            exchange_name = name_el.get_text(strip=True) if name_el else ""
 
             # Get exchange city
-            city_element = row.find_element(By.CLASS_NAME, "oras")
-            city_name = city_element.get_attribute("textContent").strip()
+            city_el = row.select_one(".oras")
+            city_name = city_el.get_text(strip=True) if city_el else ""
 
             # Get buy rate
-            buy_element = row.find_element(By.CLASS_NAME, "buy-rate")
-            buy_text = buy_element.get_attribute("textContent").strip()
+            buy_el = row.select_one(".buy-rate")
+            buy_text = buy_el.get_text(strip=True) if buy_el else ""
             buy_rate = buy_text.split()[0] if buy_text else ""
 
-            # Get sell rate (what they charge to sell EUR to you)
-            sell_element = row.find_element(By.CLASS_NAME, "sell-rate")
-            sell_text = sell_element.get_attribute("textContent").strip()
+            # Get sell rate
+            sell_el = row.select_one(".sell-rate")
+            sell_text = sell_el.get_text(strip=True) if sell_el else ""
             sell_rate = sell_text.split()[0] if sell_text else ""
 
             if buy_rate and sell_rate:
@@ -113,7 +118,6 @@ def wait_for_proper_loading(driver):
     WebDriverWait(driver, 15).until(
         EC.presence_of_element_located((By.CLASS_NAME, "exchangegrid"))
     )
-
     time.sleep(2)
 
 

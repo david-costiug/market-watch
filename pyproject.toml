@@ -12,7 +12,11 @@ dependencies = [
     "psycopg2-binary",
     "python-dotenv",
     "tzdata",
+    "beautifulsoup4",
 ]
+
+[project.optional-dependencies]
+dev = ["pytest", "testcontainers", "beautifulsoup4", "ruff"]
 
 [project.scripts]
 query-rates = "scripts.query_rates:main"
