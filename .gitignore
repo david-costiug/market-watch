@@ -29,3 +29,6 @@ Thumbs.db
 # Logs
 logs/
 
+# Cache
+.ruff_cache/
+.pytest_cache/
