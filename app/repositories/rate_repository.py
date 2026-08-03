@@ -95,3 +95,25 @@ def get_latest_rates_by_currency(
     ]
 
 
+def get_latest_rate_for_entity(conn, entity_id: int, currency: str):
+    """Fetch the most recent exchange rate for a specific entity and currency."""
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT buy_rate, sell_rate
+        FROM exchange_rates
+        WHERE entity_id = %s AND currency = %s
+        ORDER BY scraped_at DESC
+        LIMIT 1
+        """,
+        (entity_id, currency.upper()),
+    )
+    
+    row = cursor.fetchone()
+    if row:
+        return {
+            "buy_rate": float(row[0]),
+            "sell_rate": float(row[1])
+        }
+    return None
+
