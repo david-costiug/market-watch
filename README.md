@@ -165,10 +165,34 @@ python scripts/recommend.py --currency EUR
 - `INDEX idx_rates_entity_currency_time` on `(entity_id, currency, scraped_at)` — optimizes rate lookups
 - Repositories use `ON CONFLICT DO NOTHING` to silently skip duplicate records
 
+## Testing & CI
+
+### Running Tests Locally
+The project uses `pytest` for testing. Integration tests use `testcontainers` to automatically spin up a temporary PostgreSQL instance. You must have Docker installed and running locally to execute them.
+
+```bash
+# Install development dependencies
+pip install -e .[dev]
+
+# Run tests
+pytest
+```
+
+### Continuous Integration (GitHub Actions)
+A CI pipeline is configured in `.github/workflows/ci.yml`. It automatically runs on every push and pull request to the `main` branch. The pipeline:
+1. Lints the codebase using `ruff`.
+2. Runs all unit and integration tests using `pytest` and `testcontainers`.
+
 ## Dependencies
 
 - **selenium** — browser automation for scraping
+- **beautifulsoup4** — fast HTML parsing
 - **psycopg2-binary** — PostgreSQL database adapter & connection pool
 - **python-dotenv** — environment variable management
 - **zoneinfo** — timezone handling (Python standard library)
 - **logging** — pipeline logging (Python standard library)
+
+### Dev Dependencies
+- **pytest** — testing framework
+- **testcontainers** — spins up ephemeral Docker containers for integration tests
+- **ruff** — lightning-fast linter and formatter
