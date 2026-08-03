@@ -28,3 +28,8 @@ CHROME_OPTIONS = [
     "--disable-dev-shm-usage",
 ]
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+
+# Own Office
+OWN_OFFICE_NAME = os.getenv("OWN_OFFICE_NAME")
+OWN_OFFICE_CITY = os.getenv("OWN_OFFICE_CITY")
+OWN_OFFICE_SOURCE = "own"
