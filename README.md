@@ -1,17 +1,17 @@
 # Market Watch
 
-An ETL pipeline for tracking Romanian currency exchange rates. Extracts EUR/RON buy and sell rates from multiple online sources, transforms raw data into structured records, and loads them into a PostgreSQL database for historical tracking.
+An ETL pipeline for tracking Romanian currency exchange rates. Extracts EUR, USD, and GBP buy and sell rates from multiple online sources, transforms raw data into structured records, and loads them into a PostgreSQL database for historical tracking. It also features a recommendation engine to suggest optimal rates for your own exchange office.
 
 ## Data Sources
 
 | Source | URL | Entity Type |
 |--------|-----|-------------|
-| **Valutare** | [valutare.ro](https://www.valutare.ro/curs/curs-valutar-case-de-schimb.html) | Exchange offices |
+| **Valutare** | [valutare.ro](https://www.valutare.ro) | Exchange offices |
 | **BNR** (via cursbnr.ro) | [cursbnr.ro](https://www.cursbnr.ro/curs-valutar-banci) | Banks |
 
 ## Project Structure
 
-```
+```text
 market-watch/
 ├── app/
 │   ├── core/
@@ -24,6 +24,7 @@ market-watch/
 │   ├── models/
 │   │   ├── entity.py            # Entity dataclass (bank / exchange office)
 │   │   ├── exchange_rate.py     # ExchangeRate dataclass with validation
+│   │   ├── recommendation.py    # Recommendation logic and dataclasses
 │   │   └── scraped_record.py    # ScrapedRecord dataclass (entity + rate pair)
 │   ├── repositories/
 │   │   ├── entity_repository.py # Entity CRUD operations
@@ -34,11 +35,15 @@ market-watch/
 │   │   └── valutare_scraper.py  # Valutare exchange office scraper
 │   └── services/
 │       ├── entity_service.py    # Entity lookup/creation logic
+│       ├── own_office_service.py# Own office entity resolution
+│       ├── pipeline_service.py  # Orchestrates scraping → storage
 │       ├── rate_service.py      # Rate insertion logic
-│       └── pipeline_service.py  # Orchestrates scraping → storage
+│       └── recommendation_service.py # Market rate recommendation engine
 ├── scripts/
+│   ├── query_rates.py           # Query and display stored rates
+│   ├── recommend.py             # Generates rate recommendations
 │   ├── run_pipeline.py          # Run all scrapers and store results
-│   └── query_rates.py           # Query and display stored rates
+│   └── set_own_rate.py          # CLI to set own office rates manually
 ├── logs/
 │   └── pipeline.log             # Pipeline log file (auto-created)
 ├── .env                         # Environment variables (DATABASE_URL)
@@ -62,6 +67,8 @@ Create a `.env` file in the root directory:
 
 ```env
 DATABASE_URL=postgresql://user:password@localhost:5432/market_watch
+OWN_OFFICE_NAME="My Exchange"
+OWN_OFFICE_CITY="Bucharest"
 ```
 
 ### Initialize the Database
@@ -93,15 +100,31 @@ python scripts/query_rates.py
 Each scraper can be run standalone for testing (prints results to stdout without storing to the database):
 
 ```bash
-python app/scrapers/bnr_scraper.py
-python app/scrapers/valutare_scraper.py
+python -m app.scrapers.bnr_scraper
+python -m app.scrapers.valutare_scraper
+```
+
+### Set Own Office Rates
+
+Manually set exchange rates for your own office:
+
+```bash
+python scripts/set_own_rate.py --currency EUR --buy 5.2 --sell 5.3
+```
+
+### Generate Market Recommendations
+
+Recommend optimal buy and sell rates based on market data, incorporating a spread safety guard and stale rate filtering:
+
+```bash
+python scripts/recommend.py --currency EUR
 ```
 
 ## Architecture
 
 ### ETL Data Flow
 
-```
+```text
 [Extract] Scrapers (Selenium) → raw HTML data
     ↓
 [Transform] Parse & validate → ScrapedRecord (dataclass)
@@ -109,7 +132,7 @@ python app/scrapers/valutare_scraper.py
 [Load] Pipeline Service → Repositories → PostgreSQL Connection Pool
 ```
 
-1. **Extract** — Scrapers launch a headless Chrome browser and pull raw rate data from source websites. The Valutare scraper handles lazy-loaded content by scrolling the page up to 10 times until all exchange rows are loaded.
+1. **Extract** — Scrapers launch a headless Chrome browser and pull raw rate data from source websites for multiple currencies (EUR, USD, GBP). The Valutare scraper handles lazy-loaded content by scrolling the page.
 2. **Transform** — HTML elements are parsed into validated `ScrapedRecord` dataclass objects, with string-to-float conversion (comma → dot decimal), timestamping, and rate validation (buy/sell must be > 0).
 3. **Load** — Pipeline service resolves entities (get-or-create) and inserts exchange rates into PostgreSQL using a connection pool. All inserts are batched in a single transaction and committed at the end.
 
