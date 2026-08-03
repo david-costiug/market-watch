@@ -1,6 +1,7 @@
 import logging
-from app.repositories.rate_repository import get_latest_rate_for_entity
+
 from app.models.exchange_rate import ExchangeRate
+from app.repositories.rate_repository import get_latest_rate_for_entity
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,4 @@ def validate_rate(conn, entity_id: int, rate: ExchangeRate, max_deviation_pct: f
     buy_diff = abs(rate.buy - prev_buy) / prev_buy if prev_buy else 0
     sell_diff = abs(rate.sell - prev_sell) / prev_sell if prev_sell else 0
     
-    if buy_diff > max_deviation_pct or sell_diff > max_deviation_pct:
-        return False
-        
-    return True
+    return not (buy_diff > max_deviation_pct or sell_diff > max_deviation_pct)

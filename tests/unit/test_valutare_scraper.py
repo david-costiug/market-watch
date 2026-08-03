@@ -1,5 +1,7 @@
 from pathlib import Path
+
 from app.scrapers.valutare_scraper import parse_html
+
 
 def test_parse_valutare_html():
     fixture_path = Path(__file__).parent.parent / "fixtures" / "valutare_eur.html"

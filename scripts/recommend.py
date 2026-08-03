@@ -90,7 +90,7 @@ def main():
     except ValueError as err:
         print(f"Error: {err}", file=sys.stderr)
         sys.exit(1)
-    except Exception as err:
+    except Exception as err:  # noqa: BLE001
         print(f"Unexpected error: {err}", file=sys.stderr)
         sys.exit(1)
 

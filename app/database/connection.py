@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+
 import psycopg2.pool
 
 from app.core.config import DATABASE_URL

@@ -1,7 +1,7 @@
 import argparse
 from datetime import datetime
 
-from app.core.config import TIMEZONE, TIMESTAMP_FORMAT
+from app.core.config import TIMESTAMP_FORMAT, TIMEZONE
 from app.database.connection import get_connection
 from app.models.exchange_rate import ExchangeRate
 from app.services.own_office_service import get_own_office_entity_id

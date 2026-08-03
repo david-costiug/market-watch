@@ -1,4 +1,4 @@
-from typing import Optional
+from __future__ import annotations
 
 from app.models.recommendation import MarketStats, OwnRateRanking, RateRecommendation
 from app.repositories.rate_repository import get_latest_rates_by_currency
@@ -11,8 +11,8 @@ DEFAULT_MAX_AGE_HOURS = 24.0
 def get_market_stats(
     conn,
     currency: str,
-    exclude_entity_id: Optional[int] = None,
-    max_age_hours: Optional[float] = DEFAULT_MAX_AGE_HOURS,
+    exclude_entity_id: int | None = None,
+    max_age_hours: float | None = DEFAULT_MAX_AGE_HOURS,
 ) -> MarketStats:
     """Calculate best and average buy & sell rates across competitors within max_age_hours."""
     if exclude_entity_id is None:
@@ -53,7 +53,7 @@ def recommend_rate(
     strategy: str = "beat_best",
     margin: float = 0.002,
     min_spread: float = DEFAULT_MIN_SPREAD,
-    max_age_hours: Optional[float] = DEFAULT_MAX_AGE_HOURS,
+    max_age_hours: float | None = DEFAULT_MAX_AGE_HOURS,
 ) -> RateRecommendation:
     """
     Recommend a buy/sell exchange rate based on market stats and strategy.
@@ -104,7 +104,7 @@ def recommend_rate(
 def rank_own_rate(
     conn,
     currency: str,
-    max_age_hours: Optional[float] = DEFAULT_MAX_AGE_HOURS,
+    max_age_hours: float | None = DEFAULT_MAX_AGE_HOURS,
 ) -> OwnRateRanking:
     """Rank own office's posted rate against competitor rates within max_age_hours."""
     own_entity_id = get_own_office_entity_id(conn)

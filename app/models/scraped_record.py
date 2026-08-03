@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+
 from app.models.entity import Entity
 from app.models.exchange_rate import ExchangeRate
 

@@ -1,4 +1,5 @@
 import logging
+
 from app.core.config import BASE_DIR
 
 LOG_DIR = BASE_DIR / "logs"

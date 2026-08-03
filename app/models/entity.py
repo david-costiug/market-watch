@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
 class Entity:
     platform_source: str
     name: str
-    city: Optional[str]
+    city: str | None
     type: str

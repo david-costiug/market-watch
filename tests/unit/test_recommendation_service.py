@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from app.models.recommendation import MarketStats, OwnRateRanking, RateRecommendation
+from app.models.recommendation import MarketStats
 from app.services.recommendation_service import (
     get_market_stats,
     rank_own_rate,
@@ -18,16 +18,18 @@ class TestRecommendationService(unittest.TestCase):
             {"entity_id": 3, "name": "Comp C", "buy_rate": 4.96, "sell_rate": 5.01},
         ]
 
-        with patch("app.services.recommendation_service.get_own_office_entity_id", return_value=99):
-            with patch("app.services.recommendation_service.get_latest_rates_by_currency", return_value=mock_rates):
-                stats = get_market_stats(mock_conn, "EUR")
+        with (
+            patch("app.services.recommendation_service.get_own_office_entity_id", return_value=99),
+            patch("app.services.recommendation_service.get_latest_rates_by_currency", return_value=mock_rates),
+        ):
+            stats = get_market_stats(mock_conn, "EUR")
 
-                self.assertEqual(stats.currency, "EUR")
-                self.assertEqual(stats.best_buy, 4.97)
-                self.assertEqual(stats.best_sell, 4.99)
-                self.assertEqual(stats.avg_buy, 4.96)
-                self.assertEqual(stats.avg_sell, 5.00)
-                self.assertEqual(stats.competitor_count, 3)
+            self.assertEqual(stats.currency, "EUR")
+            self.assertEqual(stats.best_buy, 4.97)
+            self.assertEqual(stats.best_sell, 4.99)
+            self.assertEqual(stats.avg_buy, 4.96)
+            self.assertEqual(stats.avg_sell, 5.00)
+            self.assertEqual(stats.competitor_count, 3)
 
     def test_recommend_rate_beat_best_normal(self):
         mock_conn = MagicMock()
@@ -78,18 +80,20 @@ class TestRecommendationService(unittest.TestCase):
             {"entity_id": 3, "name": "Comp C", "buy_rate": 4.94, "sell_rate": 5.03},
         ]
 
-        with patch("app.services.recommendation_service.get_own_office_entity_id", return_value=99):
-            with patch("app.services.recommendation_service.get_latest_rates_by_currency", return_value=mock_all_rates):
-                ranking = rank_own_rate(mock_conn, "EUR")
+        with (
+            patch("app.services.recommendation_service.get_own_office_entity_id", return_value=99),
+            patch("app.services.recommendation_service.get_latest_rates_by_currency", return_value=mock_all_rates),
+        ):
+            ranking = rank_own_rate(mock_conn, "EUR")
 
-                self.assertEqual(ranking.currency, "EUR")
-                self.assertEqual(ranking.own_buy, 4.96)
-                self.assertEqual(ranking.own_sell, 5.00)
-                self.assertEqual(ranking.buy_rank, 2)
-                self.assertEqual(ranking.sell_rank, 2)
-                self.assertEqual(ranking.total_competitors, 3)
-                self.assertEqual(ranking.buy_rank_text, "#2 of 3 on buy")
-                self.assertEqual(ranking.sell_rank_text, "#2 of 3 on sell")
+            self.assertEqual(ranking.currency, "EUR")
+            self.assertEqual(ranking.own_buy, 4.96)
+            self.assertEqual(ranking.own_sell, 5.00)
+            self.assertEqual(ranking.buy_rank, 2)
+            self.assertEqual(ranking.sell_rank, 2)
+            self.assertEqual(ranking.total_competitors, 3)
+            self.assertEqual(ranking.buy_rank_text, "#2 of 3 on buy")
+            self.assertEqual(ranking.sell_rank_text, "#2 of 3 on sell")
 
 
 if __name__ == "__main__":

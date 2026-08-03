@@ -1,13 +1,14 @@
 from pathlib import Path
-import pytest
+
 import psycopg2
+import pytest
 from testcontainers.community.postgres import PostgresContainer
 
 from app.models.exchange_rate import ExchangeRate
 from app.repositories.rate_repository import (
-    insert_exchange_rate,
-    get_latest_rates_by_currency,
     get_latest_rate_for_entity,
+    get_latest_rates_by_currency,
+    insert_exchange_rate,
 )
 
 

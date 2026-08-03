@@ -1,15 +1,16 @@
-from datetime import datetime
 import time
+from datetime import datetime
+
 from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
-from app.core.config import VALUTARE_URL, TIMEZONE, TIMESTAMP_FORMAT
-from app.scrapers.driver import get_driver
+from app.core.config import TIMESTAMP_FORMAT, TIMEZONE, VALUTARE_URL
 from app.models.entity import Entity
 from app.models.exchange_rate import ExchangeRate
 from app.models.scraped_record import ScrapedRecord
+from app.scrapers.driver import get_driver
 
 SOURCE_NAME = "Valutare"
 
@@ -28,7 +29,7 @@ def scrape_valutare() -> list[ScrapedRecord]:
 
         return all_rates
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"[ERROR] Valutare scraping failed: {e}")
         return all_rates
 
@@ -89,7 +90,8 @@ def parse_html(html: str, currency: str) -> list[ScrapedRecord]:
                         ),
                     )
                 )
-        except Exception:
+        except ValueError as e:
+            print(f"[WARNING] Valutare scraping skipped row due to value error: {e}")
             continue
     return rates
 

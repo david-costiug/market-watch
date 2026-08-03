@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import datetime, timedelta
 
 from app.core.config import TIMESTAMP_FORMAT, TIMEZONE
@@ -43,7 +45,7 @@ def get_latest_rates_by_currency(
     conn,
     currency: str,
     exclude_entity_id: int | None = None,
-    max_age_hours: int | float | None = None,
+    max_age_hours: float | None = None,
 ):
     """Fetch the most recent exchange rate per entity for a given currency using Postgres DISTINCT ON."""
     cursor = conn.cursor()

@@ -1,6 +1,8 @@
 from unittest.mock import MagicMock, patch
+
 from app.models.exchange_rate import ExchangeRate
 from app.services.validation_service import validate_rate
+
 
 def test_validate_rate_no_baseline():
     conn = MagicMock()

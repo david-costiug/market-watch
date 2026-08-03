@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
@@ -26,10 +27,10 @@ class RateRecommendation:
 @dataclass
 class OwnRateRanking:
     currency: str
-    own_buy: Optional[float]
-    own_sell: Optional[float]
-    buy_rank: Optional[int]
-    sell_rank: Optional[int]
+    own_buy: float | None
+    own_sell: float | None
+    buy_rank: int | None
+    sell_rank: int | None
     total_competitors: int
     buy_rank_text: str
     sell_rank_text: str

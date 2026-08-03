@@ -1,5 +1,7 @@
 from pathlib import Path
+
 from app.scrapers.bnr_scraper import parse_html
+
 
 def test_parse_bnr_html():
     fixture_path = Path(__file__).parent.parent / "fixtures" / "bnr_eur.html"

@@ -1,9 +1,10 @@
 import logging
+
 from app.database.connection import get_connection
+from app.models.scraped_record import ScrapedRecord
 from app.services.entity_service import get_or_create_entity
 from app.services.rate_service import create_exchange_rate
 from app.services.validation_service import validate_rate
-from app.models.scraped_record import ScrapedRecord
 
 logger = logging.getLogger(__name__)
 

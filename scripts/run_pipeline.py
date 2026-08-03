@@ -1,6 +1,6 @@
 from app.core.logging import logger
-from app.scrapers.valutare_scraper import scrape_valutare
 from app.scrapers.bnr_scraper import scrape_bnr
+from app.scrapers.valutare_scraper import scrape_valutare
 from app.services.pipeline_service import process_scraped_data
 
 
@@ -14,7 +14,7 @@ def run_all():
             records = scraper()
             logger.info(f"Scraper {scraper.__name__} returned {len(records)} records.")
             all_records.extend(records)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Scraper {scraper.__name__} failed: {e}")
 
     if not all_records:
