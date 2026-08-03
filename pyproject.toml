@@ -11,12 +11,14 @@ dependencies = [
     "selenium",
     "psycopg2-binary",
     "python-dotenv",
+    "tzdata",
 ]
 
 [project.scripts]
 query-rates = "scripts.query_rates:main"
 run-pipeline = "scripts.run_pipeline:run_all"
 init-db = "app.database.init_database:init_db"
+set-own-rate = "scripts.set_own_rate:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
